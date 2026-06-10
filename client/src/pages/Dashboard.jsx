@@ -859,10 +859,12 @@ const Dashboard = () => {
                       className="input-field"
                       value={fuelType}
                       onChange={(e) => setFuelType(e.target.value)}
+                      disabled={true}
                     >
                       <option value="Petrol">Petrol</option>
                       <option value="Diesel">Diesel</option>
                       <option value="CNG">CNG</option>
+                      <option value="Electric">Electric</option>
                       <option value="EV Charging">EV Charging</option>
                     </select>
                   </div>

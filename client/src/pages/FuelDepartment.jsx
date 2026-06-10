@@ -837,11 +837,12 @@ const FuelDepartment = () => {
                     className="input-field"
                     value={fuelType}
                     onChange={(e) => setFuelType(e.target.value)}
-                    disabled={submitting}
+                    disabled={true}
                   >
                     <option value="Petrol">Petrol</option>
                     <option value="Diesel">Diesel</option>
                     <option value="CNG">CNG</option>
+                    <option value="Electric">Electric</option>
                     <option value="EV Charging">EV Charging</option>
                   </select>
                 </div>
@@ -1071,11 +1072,12 @@ const FuelDepartment = () => {
                     className="input-field"
                     value={editFuelType}
                     onChange={(e) => setEditFuelType(e.target.value)}
-                    disabled={submitting}
+                    disabled={true}
                   >
                     <option value="Petrol">Petrol</option>
                     <option value="Diesel">Diesel</option>
                     <option value="CNG">CNG</option>
+                    <option value="Electric">Electric</option>
                     <option value="EV Charging">EV Charging</option>
                   </select>
                 </div>
