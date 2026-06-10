@@ -1,5 +1,7 @@
 import express from 'express';
 import multer from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import path from 'path';
 import fs from 'fs';
 import Expense from '../models/Expense.js';
@@ -11,38 +13,24 @@ const router = express.Router();
 // Apply auth middleware
 router.use(protect);
 
-// Configure Multer for attachments
-const uploadDir = './uploads';
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
-const storage = multer.diskStorage({
-  destination(req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename(req, file, cb) {
-    cb(
-      null,
-      `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`
-    );
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'vehicle_expenses',
+    allowed_formats: ['jpeg', 'jpg', 'png', 'gif', 'pdf'],
   },
 });
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter(req, file, cb) {
-    const filetypes = /jpeg|jpg|png|gif|pdf/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
-
-    if (extname && mimetype) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Images and PDFs only!'));
-    }
-  },
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
 });
 
 // Helper function to recalculate all fuel log mileages chronologically/by odometer
@@ -84,7 +72,7 @@ router.post('/upload', upload.single('attachment'), (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
-    const fileUrl = `/uploads/${req.file.filename}`;
+    const fileUrl = req.file.path; // Cloudinary URL
     res.json({ fileUrl });
   } catch (error) {
     console.error(error);
