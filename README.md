@@ -1,4 +1,4 @@
-# 🚗 V-Track — Vehicle Expense & Mileage Tracker
+# 🚗 V-Track — Manage-Every-Mile-Every-Expense
 
 V-Track is a premium, full-stack MERN application designed for tracking vehicle expenses, fuel consumption, and mileage trends. Built with a sleek dark glassmorphism design system, it features real-time statistics, geolocation tracking, interactive dashboards, and multi-vehicle garage management.
 
