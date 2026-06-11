@@ -11,6 +11,7 @@ import FuelDepartment from './pages/FuelDepartment';
 import OtherExpenses from './pages/OtherExpenses';
 import Vehicles from './pages/Vehicles';
 import Profile from './pages/Profile';
+import { Analytics } from "@vercel/analytics/react";
 
 // Icons
 import { LayoutDashboard, Fuel, Wrench, Car, User, LogOut, Menu, X } from 'lucide-react';
@@ -304,6 +305,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Router>
+      <Analytics />
     </AuthProvider>
   );
 }
