@@ -67,17 +67,23 @@ const recalculateMileages = async (vehicleId) => {
 // @desc    Upload an attachment
 // @route   POST /api/expenses/upload
 // @access  Private
-router.post('/upload', upload.single('attachment'), (req, res) => {
-  try {
+router.post('/upload', (req, res) => {
+  upload.single('attachment')(req, res, function (err) {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ message: 'File too large. Document must be less than 2MB' });
+      }
+      return res.status(400).json({ message: err.message });
+    } else if (err) {
+      return res.status(500).json({ message: err.message || 'File upload failed' });
+    }
+
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
     const fileUrl = req.file.path; // Cloudinary URL
     res.json({ fileUrl });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message || 'File upload failed' });
-  }
+  });
 });
 
 // @desc    Get all expenses for the user (with filters)

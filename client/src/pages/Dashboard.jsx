@@ -52,13 +52,16 @@ const Dashboard = () => {
   const [expenseNotes, setExpenseNotes] = useState('');
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().slice(0, 10));
   const [expenseAttachmentUrl, setExpenseAttachmentUrl] = useState('');
+  const [formError, setFormError] = useState('');
 
   const handleAddVehicle = async (e) => {
     e.preventDefault();
+    if (submitting) return;
     if (!make || !model || !licensePlate) {
-      alert('Please fill in make, model and license plate');
+      setFormError('Please fill in make, model and license plate');
       return;
     }
+    setFormError('');
 
     setSubmitting(true);
     try {
@@ -91,10 +94,12 @@ const Dashboard = () => {
 
   const handleSaveFuel = async (e) => {
     e.preventDefault();
+    if (submitting) return;
     if (!vId || !odometer || !fuelVolume || !pricePerLiter) {
-      alert('Please provide vehicle, odometer reading, liters filled, and price/L');
+      setFormError('Please provide vehicle, odometer reading, liters filled, and price/L');
       return;
     }
+    setFormError('');
 
     setSubmitting(true);
     const amount = parseFloat(fuelVolume) * parseFloat(pricePerLiter);
@@ -142,10 +147,12 @@ const Dashboard = () => {
 
   const handleSaveExpense = async (e) => {
     e.preventDefault();
+    if (submitting) return;
     if (!vId || !expenseCategory || !expenseAmount) {
-      alert('Please provide vehicle, category and cost amount');
+      setFormError('Please provide vehicle, category and cost amount');
       return;
     }
+    setFormError('');
 
     setSubmitting(true);
     try {
@@ -208,7 +215,12 @@ const Dashboard = () => {
         const data = JSON.parse(xhr.responseText);
         targetSetter(data.fileUrl);
       } else {
-        alert('File upload failed: ' + xhr.statusText);
+        try {
+          const errData = JSON.parse(xhr.responseText);
+          alert(errData.message || 'File upload failed');
+        } catch(e) {
+          alert('File upload failed: ' + xhr.statusText);
+        }
       }
     };
 
@@ -605,6 +617,8 @@ const Dashboard = () => {
                     outerRadius={85}
                     paddingAngle={4}
                     dataKey="value"
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                    labelLine={{ stroke: 'rgba(255,255,255,0.2)' }}
                   >
                     {chartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[entry.name] || '#7c3aed'} />
@@ -619,7 +633,7 @@ const Dashboard = () => {
                     }}
                     itemStyle={{ color: '#ffffff' }}
                     labelStyle={{ color: '#ffffff' }}
-                    formatter={(value) => [`₹${value.toFixed(2)}`, 'Cost']}
+                    formatter={(value, name) => [`₹${value.toFixed(2)}`, name]}
                   />
                   <Legend
                     verticalAlign="bottom"
@@ -702,6 +716,22 @@ const Dashboard = () => {
               <Plus size={20} style={{ color: 'var(--color-primary)' }} />
               Quick Add Log
             </h2>
+
+            {formError && (
+              <div
+                style={{
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  color: 'var(--color-danger)',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  fontSize: '0.85rem',
+                  marginBottom: '24px',
+                }}
+              >
+                {formError}
+              </div>
+            )}
 
             {/* Dropdown to select type */}
             <div className="input-group" style={{ marginBottom: '24px' }}>
@@ -839,7 +869,9 @@ const Dashboard = () => {
                   </div>
 
                   <div className="input-group">
-                    <label className="input-label">Fuel Volume (Liters)</label>
+                    <label className="input-label">
+                      Fuel Volume/Quantity ({fuelType === 'CNG' ? 'Kg' : fuelType.includes('Electric') || fuelType === 'EV Charging' ? 'kWh' : 'Liters'})
+                    </label>
                     <input
                       type="number"
                       step="0.01"
@@ -870,7 +902,9 @@ const Dashboard = () => {
                   </div>
 
                   <div className="input-group">
-                    <label className="input-label">Price per Liter (₹/L)</label>
+                    <label className="input-label">
+                      Price per Unit ({fuelType === 'CNG' ? '₹/Kg' : fuelType.includes('Electric') || fuelType === 'EV Charging' ? '₹/kWh' : '₹/L'})
+                    </label>
                     <input
                       type="number"
                       step="0.01"

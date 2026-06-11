@@ -185,7 +185,12 @@ const FuelDepartment = () => {
         const data = JSON.parse(xhr.responseText);
         setAttachmentUrl(data.fileUrl);
       } else {
-        alert('File upload failed: ' + xhr.statusText);
+        try {
+          const errData = JSON.parse(xhr.responseText);
+          alert(errData.message || 'File upload failed');
+        } catch(e) {
+          alert('File upload failed: ' + xhr.statusText);
+        }
       }
     };
 
@@ -200,6 +205,7 @@ const FuelDepartment = () => {
   // Submit fuel expense
   const handleSaveFuel = async (e) => {
     e.preventDefault();
+    if (submitting) return;
     if (!vehicleId || !odometer || !fuelVolume || !pricePerLiter) {
       setError('Please provide vehicle, odometer reading, liters filled, and price/L');
       return;
@@ -269,6 +275,7 @@ const FuelDepartment = () => {
 
   const handleUpdateFuel = async (e) => {
     e.preventDefault();
+    if (submitting) return;
     if (!editVehicleId || !editOdometer || !editFuelVolume || !editPricePerLiter) {
       alert('Please provide vehicle, odometer reading, liters filled, and price/L');
       return;
@@ -435,6 +442,10 @@ const FuelDepartment = () => {
       'Price/L': e.pricePerLiter || null,
     }));
 
+  const selectedVehicleData = vehicles.find((v) => v._id === selectedVehicle);
+  const displayFuelType = selectedVehicleData?.fuelType || 'Petrol';
+  const displayVolumeUnit = displayFuelType === 'CNG' ? 'Kg' : (displayFuelType.includes('Electric') || displayFuelType === 'EV Charging' ? 'kWh' : 'L');
+
   return (
     <div style={{ position: 'relative' }}>
       <div className="bg-glow-purple" />
@@ -498,9 +509,9 @@ const FuelDepartment = () => {
       >
         <div className="glass-panel" style={{ padding: '20px' }}>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem', fontWeight: '500', marginBottom: '6px' }}>
-            Fuel Used (L)
+            Fuel Used ({displayVolumeUnit})
           </p>
-          <h3 style={{ fontSize: '1.5rem', fontWeight: '700' }}>{totalVolume.toFixed(2)} L</h3>
+          <h3 style={{ fontSize: '1.5rem', fontWeight: '700' }}>{totalVolume.toFixed(2)} {displayVolumeUnit}</h3>
         </div>
         <div className="glass-panel" style={{ padding: '20px' }}>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem', fontWeight: '500', marginBottom: '6px' }}>
@@ -519,7 +530,7 @@ const FuelDepartment = () => {
             Avg Mileage
           </p>
           <h3 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-primary)' }}>
-            {avgMileage !== 'N/A' ? `${avgMileage} KM/L` : 'N/A'}
+            {avgMileage !== 'N/A' ? `${avgMileage} KM/${displayVolumeUnit}` : 'N/A'}
           </h3>
         </div>
       </div>
@@ -538,7 +549,7 @@ const FuelDepartment = () => {
           <div className="glass-panel" style={{ padding: '24px' }}>
             <h2 style={{ fontSize: '1.1rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <TrendingUp size={18} style={{ color: 'var(--color-primary)' }} />
-              Mileage Trend (KM/L)
+              Mileage Trend (KM/{displayVolumeUnit})
             </h2>
             <div style={{ width: '100%', minWidth: 0, height: '240px', overflow: 'hidden' }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -574,7 +585,7 @@ const FuelDepartment = () => {
           <div className="glass-panel" style={{ padding: '24px' }}>
             <h2 style={{ fontSize: '1.1rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <TrendingUp size={18} style={{ color: 'var(--color-secondary)' }} />
-              Fuel Price/L Trend (₹)
+              Fuel Price/{displayVolumeUnit} Trend (₹)
             </h2>
             <div style={{ width: '100%', minWidth: 0, height: '240px', overflow: 'hidden' }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -626,9 +637,9 @@ const FuelDepartment = () => {
                   <th>Date</th>
                   <th>Odometer</th>
                   <th>Distance Run</th>
-                  <th>Volume</th>
+                  <th>Volume/Qty</th>
                   <th>Fuel Type</th>
-                  <th>Price/L</th>
+                  <th>Price/Unit</th>
                   <th>Total Cost</th>
                   <th>Mileage</th>
                   <th>Location & Notes</th>
@@ -656,7 +667,9 @@ const FuelDepartment = () => {
                       <td style={{ whiteSpace: 'nowrap' }}>
                         {distanceSinceLast !== null ? `${distanceSinceLast} KM` : '—'}
                       </td>
-                      <td style={{ whiteSpace: 'nowrap' }}>{log.fuelVolume} L</td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        {log.fuelVolume} {log.fuelType === 'CNG' ? 'Kg' : (log.fuelType?.includes('Electric') || log.fuelType === 'EV Charging' ? 'kWh' : 'L')}
+                      </td>
                       <td>
                         <span
                           style={{
@@ -677,7 +690,7 @@ const FuelDepartment = () => {
                         ₹{log.amount.toFixed(2)}
                       </td>
                       <td style={{ whiteSpace: 'nowrap', fontWeight: '600', color: 'var(--color-primary)' }}>
-                        {log.mileage ? `${log.mileage} KM/L` : '—'}
+                        {log.mileage ? `${log.mileage} KM/${log.fuelType === 'CNG' ? 'Kg' : (log.fuelType?.includes('Electric') || log.fuelType === 'EV Charging' ? 'kWh' : 'L')}` : '—'}
                       </td>
                       <td>
                         <div style={{ minWidth: '180px' }}>
@@ -786,6 +799,22 @@ const FuelDepartment = () => {
               Log Fuel Stop
             </h2>
 
+            {error && (
+              <div
+                style={{
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  color: 'var(--color-danger)',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  fontSize: '0.85rem',
+                  marginBottom: '24px',
+                }}
+              >
+                {error}
+              </div>
+            )}
+
             <form onSubmit={handleSaveFuel}>
               <div className="input-group">
                 <label className="input-label">Vehicle</label>
@@ -817,7 +846,9 @@ const FuelDepartment = () => {
                 </div>
 
                 <div className="input-group">
-                  <label className="input-label">Fuel Volume (Liters)</label>
+                  <label className="input-label">
+                    Fuel Volume/Quantity ({fuelType === 'CNG' ? 'Kg' : fuelType.includes('Electric') || fuelType === 'EV Charging' ? 'kWh' : 'Liters'})
+                  </label>
                   <input
                     type="number"
                     step="0.01"
@@ -848,7 +879,9 @@ const FuelDepartment = () => {
                 </div>
 
                 <div className="input-group">
-                  <label className="input-label">Price per Liter (₹/L)</label>
+                  <label className="input-label">
+                    Price per Unit ({fuelType === 'CNG' ? '₹/Kg' : fuelType.includes('Electric') || fuelType === 'EV Charging' ? '₹/kWh' : '₹/L'})
+                  </label>
                   <input
                     type="number"
                     step="0.01"
@@ -1023,6 +1056,23 @@ const FuelDepartment = () => {
               <Fuel size={20} style={{ color: 'var(--color-secondary)' }} />
               Edit Fuel Entry
             </h2>
+
+            {error && (
+              <div
+                style={{
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  color: 'var(--color-danger)',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  fontSize: '0.85rem',
+                  marginBottom: '24px',
+                }}
+              >
+                {error}
+              </div>
+            )}
+
             <form onSubmit={handleUpdateFuel}>
               <div className="input-group">
                 <label className="input-label">Vehicle</label>
@@ -1053,7 +1103,9 @@ const FuelDepartment = () => {
                 </div>
 
                 <div className="input-group">
-                  <label className="input-label">Volume (Liters)</label>
+                  <label className="input-label">
+                    Volume/Qty ({editFuelType === 'CNG' ? 'Kg' : editFuelType.includes('Electric') || editFuelType === 'EV Charging' ? 'kWh' : 'Liters'})
+                  </label>
                   <input
                     type="number"
                     step="0.01"
@@ -1083,7 +1135,9 @@ const FuelDepartment = () => {
                 </div>
 
                 <div className="input-group">
-                  <label className="input-label">Price per Liter (₹/L)</label>
+                  <label className="input-label">
+                    Price per Unit ({editFuelType === 'CNG' ? '₹/Kg' : editFuelType.includes('Electric') || editFuelType === 'EV Charging' ? '₹/kWh' : '₹/L'})
+                  </label>
                   <input
                     type="number"
                     step="0.01"
